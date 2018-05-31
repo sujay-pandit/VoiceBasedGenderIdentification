@@ -1,6 +1,10 @@
+clear all;
 %% Import Data
 run('loadData1.m');
 run('loadLabels.m');
+
+%% User Defined Functions
+%[accuracy_fitcknn,accuracy_mynb]=NB_KNN(voice_data,voice_label);
 %% Scaling data using min-max method
 [r,c]=size(voice_data);
 
@@ -21,38 +25,130 @@ for i=1:r
         voice_data(i,c+1)=2;
     end
 end
+trainData(1:1056,:,1)=voice_data(1:1056,:);
+trainData(1057:2112,:,1)=voice_data(1585:2640,:);
+testData(1:528,:,1)=voice_data(1057:1584,:);
+testData(529:1056,:,1)=voice_data(2641:3168,:);
 
-%Creating testing and Training data
-trainData(1:1056,:)=voice_data(1:1056,:);
-trainData(1057:2112,:)=voice_data(1585:2640,:);
-testData(1:528,:)=voice_data(1057:1584,:);
-testData(529:1056,:)=voice_data(2641:3168,:);
+trainData(1:1056,:,2)=voice_data(1585:2640,:);
+trainData(1057:2112,:,2)=voice_data(1:1056,:);
+testData(1:528,:,2)=voice_data(2641:3168,:);
+testData(529:1056,:,2)=voice_data(1057:1584,:);
 
+trainData(1:1056,:,3)=voice_data(529:1584,:);
+trainData(1057:2112,:,3)=voice_data(2113:3168,:);
+testData(1:528,:,3)=voice_data(1:528,:);
+testData(529:1056,:,3)=voice_data(1585:2112,:);
+
+
+trainData(1:1056,:,4)=voice_data(2113:3168,:);
+trainData(1057:2112,:,4)=voice_data(529:1584,:);
+testData(1:528,:,4)=voice_data(1585:2112,:);
+testData(529:1056,:,4)=voice_data(1:528,:);
+
+
+trainData(1:528,:,5)=voice_data(1:528,:);
+trainData(529:1056,:,5)=voice_data(1057:1584,:);
+trainData(1057:1584,:,5)=voice_data(1585:2112,:);
+trainData(1585:2112,:,5)=voice_data(2641:3168,:);
+testData(1:528,:,5)=voice_data(529:1056,:);
+testData(529:1056,:,5)=voice_data(2113:2640,:);
+
+trainData(1:528,:,6)=voice_data(1057:1584,:);
+trainData(529:1056,:,6)=voice_data(1:528,:);
+trainData(1057:1584,:,6)=voice_data(2641:3168,:);
+trainData(1585:2112,:,6)=voice_data(1585:2112,:);
+testData(1:528,:,6)=voice_data(529:1056,:);
+testData(529:1056,:,6)=voice_data(2113:2640,:);
+
+
+trainData(1:528,:,7)=voice_data(2641:3168,:);
+trainData(529:1056,:,7)=voice_data(1:528,:);
+trainData(1057:1584,:,7)=voice_data(1057:1584,:);
+trainData(1585:2112,:,7)=voice_data(1585:2112,:);
+testData(1:528,:,7)=voice_data(2113:2640,:);
+testData(529:1056,:,7)=voice_data(529:1056,:);
+
+trainData(1:528,:,8)=voice_data(529:1056,:);
+trainData(529:1056,:,8)=voice_data(1585:2112,:);
+trainData(1057:1584,:,8)=voice_data(2641:3168,:);
+trainData(1585:2112,:,8)=voice_data(1:528,:);
+testData(1:528,:,8)=voice_data(2113:2640,:);
+testData(529:1056,:,8)=voice_data(1057:1584,:);
+
+trainData(1:528,:,9)=voice_data(2641:3168,:);
+trainData(529:1056,:,9)=voice_data(2113:2640,:);
+trainData(1057:1584,:,9)=voice_data(1057:1584,:);
+trainData(1585:2112,:,9)=voice_data(1:528,:);
+testData(1:528,:,9)=voice_data(1585:2112,:);
+testData(529:1056,:,9)=voice_data(529:1056,:);
+
+trainData(1:528,:,10)=voice_data(1585:2112,:);
+trainData(529:1056,:,10)=voice_data(2113:2640,:);
+trainData(1057:1584,:,10)=voice_data(529:1056,:);
+trainData(1585:2112,:,10)=voice_data(1057:1584,:);
+testData(1:528,:,10)=voice_data(2641:3168,:);
+testData(529:1056,:,10)=voice_data(1:528,:);
+%% PLOTTING
+% for i=1:20
+%     plot(voice_data(1:1584,i),'r');
+%     hold on
+%     plot(voice_data(1585:3168,i),'b')
+%     figure
+% end
+%% Cross Validation Accuracy
+for i=1:10
+    [a_mynb(1,i),a_fitcknn3(1,i),a_fitcknn5(1,i),predicted_classnb(:,i),predicted_class5(:,i),predicted_class3(:,i)]=NB_KNN(trainData(:,:,i),testData(:,:,i),[1,6,13,15]);
+end
+    accuracy_mynb=mean(a_mynb);
+    accuracy_fitcknn3=mean(a_fitcknn3);
+    accuracy_fitcknn5=mean(a_fitcknn5);
+%%
+
+
+%% Feature Wise
+% for j=1:20
+%     for i=1:10
+%     [a_mynb(1,i),a_fitcknn(1,i)]=NB_KNN(trainData(:,:,i),testData(:,:,i),j);
+%     end
+%     accuracy_mynb(1,j)=mean(a_mynb);
+%     accuracy_fitcknn(1,j)=mean(a_fitcknn);
+% end
+%% FUNCTIONs
+function [accuracy_mynb,accuracy_fitcknn3,accuracy_fitcknn5,predicted_classnb,predicted_class5,predicted_class3]=NB_KNN(trainData,testData,featurelist);
 trainData_b=bin(trainData);
 testData_b=bin(testData);
-
-%% Naive Bayes: Using In-built functions
-Hypothesis_func_nb = fitcnb(trainData_b(:,1:20),trainData_b(:,21));%NB Classifier
-
-for i=1:1056
-predicted_class=predict(Hypothesis_func_nb,testData_b(i,1:20));
-testData_b(i,22)=predicted_class;
+idx=1;
+for i=1:length(featurelist)
+    trData_b(:,idx)=trainData_b(:,featurelist(1,i));
+    teData_b(:,idx)=testData_b(:,featurelist(1,i));
+    trData(:,idx)=trainData(:,featurelist(1,i));
+    teData(:,idx)=testData(:,featurelist(1,i));
+    idx=idx+1;
 end
-accuracy_fitcnb=calc_accuracy(testData_b(:,21),testData_b(:,22));
+
 %% KNN: Using In-Built functions
-Hypothesis_func_knn = fitcknn(trainData_b(:,1:20),trainData_b(:,21),'NumNeighbors',5);%KNN Classifier
+Hypothesis_func_knn = fitcknn(trData,trainData(:,21),'NumNeighbors',5);%KNN Classifier
 for i=1:1056
-predicted_class=predict(Hypothesis_func_knn,testData_b(i,1:20));
-testData_b(i,22)=predicted_class;
+predicted_class=predict(Hypothesis_func_knn,teData(i,:));
+testData(i,22)=predicted_class;
+predicted_class5(i,1)=predicted_class;
 end
-accuracy_fitcknn=calc_accuracy(testData_b(:,21),testData_b(:,22));
+accuracy_fitcknn5=calc_accuracy(testData(:,21),testData(:,22));
+Hypothesis_func_knn = fitcknn(trData,trainData(:,21),'NumNeighbors',3);%KNN Classifier
+for i=1:1056
+predicted_class=predict(Hypothesis_func_knn,teData(i,:));
+testData(i,22)=predicted_class;
+predicted_class3(i,1)=predicted_class;
+end
+accuracy_fitcknn3=calc_accuracy(testData(:,21),testData(:,22));
 %% Naive Bayes: Self Defined 
 % elementcount counts frequency of every element in every class in the
 % feature
 % calc_prob calculates probability of a value of a feature in a particular
 % class
-for i=1:c
-x(:,:,i)=calc_prob(elementcount(trainData_b(:,i),trainData_b(:,21))); 
+for i=1:length(featurelist)
+x(:,:,i)=calc_prob(elementcount(trData_b(:,i),trainData_b(:,21))); 
 end
 
 % testing
@@ -60,9 +156,9 @@ final_prob=ones(length(testData),2);
 for j=1:length(testData)
    % [final_prob,predicted_class]=test_model(x,testData(i,1:20)');
     for class=1:2
-        for k=1:20
+        for k=1:length(featurelist)
             for i=1:length(x(:,:,k))
-                if(x(i,1,k)==testData_b(j,k))
+                if(x(i,1,k)==teData_b(j,k))
                     final_prob(j,class)=final_prob(j,class)*x(i,class+1,k);
                 end
             end
@@ -72,29 +168,11 @@ for j=1:length(testData)
     testData_b(j,22)=predicted_class;
     testData_b(j,23)=final_prob(j,1);
     testData_b(j,24)=final_prob(j,2);
+    predicted_classnb(j,1)=predicted_class;
 end
 accuracy_mynb=calc_accuracy(testData_b(:,21),testData_b(:,22));
-%% KNN Self defined
-for i=1:length(testData_b)
-    for j=1:length(trainData_b)
-            d(i,j)=calc_distance(testData_b(i,1:20),trainData_b(j,1:20));
-    end
 end
-for k=1:5
-    for i=1:length(testData_b)
-           [data_val,data_index] = min(d(i,:)');
-           d(i,data_index)=100000000;
-           k_nearest(i,k)=trainData_b(data_index,21);
-    end
-end
-for i=1:length(k_nearest)
-    [u,prob,predicted_class]=knn_class(k_nearest(i,:));
-    testData_b(i,25)=predicted_class;
-    testData_b(i,26)=prob;
-end
-accuracy_myknn=calc_accuracy(testData_b(:,21),testData_b(:,25));
 
-%% USER-DEFINED Functions 
 function accuracy=calc_accuracy(arr,arr2)
 c=0;
     for i=1:length(arr)
@@ -109,31 +187,41 @@ function data=bin(D) % Into 8 bins
 [r,c]=size(D);
 for j=1:c-1
     for i=1:r
-        if(D(i,j)<=0.125)
-            data(i,j)=0.125;
-        elseif(D(i,j)>0.125 && D(i,j)<=0.25)
+        if(D(i,j)<=0.25)
             data(i,j)=0.25;
-        elseif(D(i,j)>0.25 && D(i,j)<=0.375)
-            data(i,j)=0.375;
-        elseif(D(i,j)>0.375 && D(i,j)<=0.5)
+        elseif(D(i,j)>0.25 && D(i,j)<=0.5)
             data(i,j)=0.5;
-        elseif(D(i,j)>0.5 && D(i,j)<=0.625)
-            data(i,j)=0.625;
-        elseif(D(i,j)>0.625 && D(i,j)<=0.75)
+        elseif(D(i,j)>0.5 && D(i,j)<=0.75)
             data(i,j)=0.75;
-        elseif(D(i,j)>0.75 && D(i,j)<=0.875)
-            data(i,j)=0.875;
-        elseif(D(i,j)>0.875)
+        elseif(D(i,j)>0.75 && D(i,j)<=1)
             data(i,j)=1;
         end
+%         if(D(i,j)<=0.125)
+%             data(i,j)=0.125;
+%         elseif(D(i,j)>0.125 && D(i,j)<=0.25)
+%             data(i,j)=0.25;
+%         elseif(D(i,j)>0.25 && D(i,j)<=0.375)
+%             data(i,j)=0.375;
+%         elseif(D(i,j)>0.375 && D(i,j)<=0.5)
+%             data(i,j)=0.5;
+%         elseif(D(i,j)>0.5 && D(i,j)<=0.625)
+%             data(i,j)=0.625;
+%         elseif(D(i,j)>0.625 && D(i,j)<=0.75)
+%             data(i,j)=0.75;
+%         elseif(D(i,j)>0.75 && D(i,j)<=0.875)
+%             data(i,j)=0.875;
+%         elseif(D(i,j)>0.875)
+%             data(i,j)=1;
+%         end
     end
 end
 data(:,c)=D(:,c);
 end
 function count=elementcount(arr,arr2)
-bins=8;
+bins=4;
 count=zeros(bins,3);
-count(:,1)=0.125:1/8:1;
+% count(:,1)=0.125:1/8:1;
+count(:,1)=0.25:1/4:1;
 [r,c]=size(count);
 for class=1:2
     for j=1:r 
@@ -193,4 +281,3 @@ unq(:,1)=unique(x);
     [prob,index]=max(unq(:,3));
     predicted_class=unq(index,1);
 end
-
